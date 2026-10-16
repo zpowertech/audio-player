@@ -8,7 +8,7 @@
 - WASM 随包提供，首次 SILK 播放时按需加载、编译。使用方无需 Rust、复制资源或访问解码服务。
 - 导入模块和创建播放器不会访问 DOM、创建音频设备、初始化 WASM 或请求音频；可用于 SSR。实际播放需要浏览器。
 
-本仓库目前为未发布首版。先使用本地 `npm pack` 产物安装；发布后可使用 `npm install @zpowertech/audio-player`。
+安装：`npm install @zpowertech/audio-player`。本地开发也可使用 `npm pack` 产物安装。
 
 ## 快速使用
 
@@ -104,26 +104,26 @@ SILK 播放结束后重播，优先复用**完整且经过验证的压缩缓存*
 
 当前范围是有限音频文件的渐进播放，不包含实时通信、播放列表、混音、录音、编码、HLS/DASH 引擎或移动端后台播放保证。首版使用小块 `AudioBufferSourceNode` 排程，主线程长时间阻塞仍可能导致缓冲耗尽。
 
-## 支持表
+## Chrome 验证范围
 
-下表是 **2026-10-16 在 macOS 上使用仓库真实音频样本的结果**。`✓` 表示开始播放并自然结束；`—` 表示浏览器拒绝该编码，SDK 返回 `NOT_SUPPORTED`。格式支持不由扩展名或 `canPlayType()` 的返回值代替实测。
+后续浏览器验证统一使用 Chrome，Playwright 固定 `channel: 'chrome'`。下表是 **2026-10-16 在 macOS 上使用仓库真实音频样本的结果**。`✓` 表示开始播放并自然结束；`—` 表示浏览器拒绝该编码，SDK 返回 `NOT_SUPPORTED`。格式支持不由扩展名或 `canPlayType()` 的返回值代替实测。
 
-| 容器 / 编码 | Chrome 155 | Edge 155 | Firefox 157* | WebKit 测试引擎* | Safari 27.0.1 |
-| --- | --- | --- | --- | --- | --- |
-| SILK v3 / 单声道 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| WAV / 16-bit PCM | ✓ | ✓ | ✓ | ✓ | ✓ |
-| MP3 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| M4A / AAC-LC | ✓ | ✓ | ✓ | ✓ | ✓ |
-| AAC / ADTS | ✓ | ✓ | ✓ | ✓ | ✓ |
-| FLAC | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Ogg / Vorbis | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Ogg / Opus | ✓ | ✓ | ✓ | ✓ | ✓ |
-| WebM / Opus | ✓ | ✓ | ✓ | ✓ | ✓ |
-| M4A / ALAC | — | — | — | ✓ | ✓ |
-| AMR、WMA、APE 等 | 不提供解码器 | 不保证 | 不保证 | 不保证 | 不保证 |
-| HLS / DASH | 无跨浏览器协议适配 | 同左 | 同左 | 同左 | 原生行为不列为 SDK 保证 |
+| 容器 / 编码 | Chrome 155 |
+| --- | --- |
+| SILK v3 / 单声道 | ✓ |
+| WAV / 16-bit PCM | ✓ |
+| MP3 | ✓ |
+| M4A / AAC-LC | ✓ |
+| AAC / ADTS | ✓ |
+| FLAC | ✓ |
+| Ogg / Vorbis | ✓ |
+| Ogg / Opus | ✓ |
+| WebM / Opus | ✓ |
+| M4A / ALAC | — |
+| AMR、WMA、APE 等 | 不提供解码器 |
+| HLS / DASH | 无跨浏览器协议适配 |
 
-*Firefox 157 和 WebKit 是 Playwright 的测试构建；WebKit 结果不能替代 Safari。Safari 通过独立测试页实际点击验收。实际版本、场景和记录见 [验证说明](docs/verification.md)。AAC 等格式受操作系统解码能力影响；其他系统和旧版本需要独立验收。Safari 的 Ogg 支持也有系统版本条件，见 [WebKit 18.4 说明](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/)。
+实际版本、场景和历史记录见 [验证说明](docs/verification.md)。AAC 等格式受操作系统解码能力影响；其他系统和旧版本需要独立验收。其他浏览器的旧记录仅作为历史参考，不属于当前持续验证范围。
 
 SDK 不添加 SILK 以外的解码器，因此不承诺浏览器本来不支持的格式。支持表针对已列出的容器与编码组合，不代表该扩展名下任意编码。
 
@@ -190,19 +190,20 @@ npm run serve
 打开 Vite 提示的 `/examples/`，可播放远程 URL、本地文件并体验 React 聊天列表。演示使用构建后的 `dist`，修改 TypeScript 后需要重新 `npm run build`。
 
 ```sh
-npx playwright install --with-deps chromium firefox webkit
+# 已安装 Chrome 时可跳过；Linux CI 使用 --with-deps 安装系统依赖。
+npx playwright install chrome
 npm run verify
 ```
 
-`verify` 依次执行：构建、Rust、Node、示例类型检查、npm tarball 独立安装、Vite / Webpack 构建，以及三种浏览器的播放与安装包验证。所有浏览器测试均使用本地样本和服务器，无需远程音频服务。
+`verify` 依次执行：构建、Rust、Node、示例类型检查、npm tarball 独立安装、Vite / Webpack 构建，以及 Chrome 的核心播放、安装包和示例交互验证。三套 Playwright 配置均只运行 `chrome` 项目，所有浏览器测试使用本地样本和服务器，无需远程音频服务。
 
 ```sh
-# 可选：真实品牌浏览器回归（已安装的 Chrome / Edge）
-AUDIO_TEST_CHANNELS=chrome,msedge npx playwright test --project=chrome --project=msedge
+# 单独运行 Chrome 核心播放回归（先完成构建）
+npx playwright test --project=chrome
 
-# Safari 手工验收页，不要求开启远程自动化
+# Chrome 手工验收页
 node scripts/test-server.mjs
-# 在 Safari 打开 http://127.0.0.1:4280/test/browser/manual.html，逐项点击。
+# 在 Chrome 打开 http://127.0.0.1:4280/test/browser/manual.html，逐项点击。
 # 结果同时显示在页面，并保存到 output/manual-results.json。
 
 # 生成可分发包，prepack 自动生成完整产物；不会发布
@@ -211,9 +212,17 @@ npm pack
 npm install /absolute/path/to/zpowertech-audio-player-0.1.0.tgz
 ```
 
-CI 包含 Linux 三引擎和 Windows Chrome / Edge 工作流，不包含 npm 发布步骤。`test:browser` 的安装包用例需要先运行 `test:package`。测试生成物、缓存和 tarball 不进入 Git。
+验证 CI 在 Linux 执行完整 `verify`，在 Windows 执行核心播放回归，浏览器均为 Chrome。`test:browser` 的安装包用例需要先运行 `test:package`。测试生成物、缓存和 tarball 不进入 Git。
 
 默认 WASM 内嵌模块从同一次 Rust 构建生成；构建使用 `--locked`。发布文件限于 `dist`、README、许可证与 npm 元数据，没有安装时构建脚本。Vite / Webpack 5 默认无需额外 WASM 资源配置，已覆盖 `/nested/` 子路径。
+
+## npm 发布
+
+发布流程为 **Changesets → 版本 PR → GitHub Actions → npm Trusted Publishing**，与 `antd-overlay` 的流程保持一致。
+
+需要发布功能或修复时运行 `npm run changeset`，填写中文变更说明并随代码提交。合入 `main` 后，`Release` 工作流自动创建或更新版本 PR；检查版本与变更日志并合并后，工作流使用 OIDC 发布 npm 包，再创建 Git Tag 和 GitHub Release。无需配置 `NPM_TOKEN`。
+
+完整验证和打包在无 npm 发布权限的 job 中执行，发布 job 只上传已通过独立安装和 Chrome 验证的相同 tarball。首次发布使用 `0.1.0`；当前版本已发布且没有 changeset 时不会重复发布。首次配置、后续发布与失败重试见 [发布说明](docs/publishing.md)。
 
 ## 来源
 

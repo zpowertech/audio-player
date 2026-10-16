@@ -13,7 +13,7 @@ jobs:
           cache: npm
       - run: rustup toolchain install 1.85.0 --profile minimal --target wasm32-unknown-unknown
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx playwright install --with-deps chrome
       - run: npm run verify
       - uses: actions/upload-artifact@v4
         if: always()
@@ -24,7 +24,7 @@ jobs:
             test-results/
             .test-package/*.tgz
           include-hidden-files: true
-  branded-browsers:
+  chrome-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,14 +35,12 @@ jobs:
       - run: rustup toolchain install 1.85.0 --profile minimal --target wasm32-unknown-unknown
       - run: npm ci
       - run: npm run build
-      - run: npx playwright install chrome msedge
-      - run: npx playwright test --project=chrome --project=msedge
-        env:
-          AUDIO_TEST_CHANNELS: chrome,msedge
+      - run: npx playwright install chrome
+      - run: npx playwright test --project=chrome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: branded-browser-results
+          name: windows-chrome-results
           path: |
             output/
             test-results/

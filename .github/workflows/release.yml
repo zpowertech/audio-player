@@ -1,0 +1,112 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+env:
+  npm_config_registry: https://registry.npmjs.org/
+
+jobs:
+  prepare:
+    if: github.repository == 'zpowertech/audio-player' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      mode: ${{ steps.mode.outputs.mode }}
+      pack-dir-artifact-id: ${{ steps.pack.outputs.pack-dir-artifact-id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: rustup toolchain install 1.85.0 --profile minimal --target wasm32-unknown-unknown
+      - run: npx playwright install --with-deps chrome
+      - name: 验证代码和 Chrome 安装包行为
+        run: npm run verify
+      - name: 确定版本 PR 或发布模式
+        id: mode
+        uses: changesets/action/select-mode@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+      - name: 打包已验证的产物
+        if: steps.mode.outputs.mode == 'publish'
+        id: pack
+        uses: changesets/action/pack@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        env:
+          npm_config_ignore_scripts: 'true'
+        with:
+          publish-plan-artifact-id: ${{ steps.mode.outputs.publish-plan-artifact-id }}
+      - name: 下载待发布产物核对内容
+        if: steps.mode.outputs.mode == 'publish'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ steps.pack.outputs.pack-dir-artifact-id }}
+          path: ${{ runner.temp }}/audio-player-release
+          merge-multiple: true
+      - name: 确保发布包与 Chrome 测试包完全一致
+        if: steps.mode.outputs.mode == 'publish'
+        env:
+          RELEASE_PACKAGE_DIR: ${{ runner.temp }}/audio-player-release
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const filename = `zpowertech-audio-player-${version}.tgz`;
+          const tested = readFileSync(`.test-package/${filename}`);
+          const release = readFileSync(`${process.env.RELEASE_PACKAGE_DIR}/packages/${filename}`);
+          assert(tested.equals(release), 'Release tarball differs from the tested package');
+          JS
+
+  version:
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'version'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          ignore-scripts: 'true'
+      - name: 创建或更新版本 PR
+        uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          script: npm run version-packages
+          commit-message: 'chore(release): 更新版本与变更日志'
+          pr-title: 'chore(release): 更新版本与变更日志'
+
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.mode == 'publish'
+    runs-on: ubuntu-latest
+    environment: npm
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      npm_config_ignore_scripts: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          ignore-scripts: 'true'
+      - name: 通过 npm Trusted Publishing 发布并创建 GitHub Release
+        uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          pack-dir-artifact-id: ${{ needs.prepare.outputs.pack-dir-artifact-id }}

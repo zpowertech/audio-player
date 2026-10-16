@@ -1,0 +1,15 @@
+name: 安装 Node.js 与依赖
+description: 使用 Node.js 24 和 npm lockfile 安装依赖
+inputs:
+  ignore-scripts:
+    description: 版本和发布 job 跳过依赖安装脚本
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: '24'
+        package-manager-cache: false
+    - run: npm ci --ignore-scripts=${{ inputs.ignore-scripts }}
+      shell: bash

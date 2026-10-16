@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Browser audio playback with automatic format detection, incremental SILK decoding, pause and resume",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zpowertech/audio-player.git"
+  },
+  "homepage": "https://github.com/zpowertech/audio-player#readme",
+  "bugs": {
+    "url": "https://github.com/zpowertech/audio-player/issues"
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
@@ -28,7 +36,9 @@
     "test:browser": "playwright test && playwright test --config=playwright.package.config.mjs && playwright test --config=playwright.examples.config.mjs",
     "verify": "npm run build && npm run test:rust && npm test && npm run test:examples && npm run test:package && npm run test:browser",
     "serve": "vite --open /examples/",
-    "test:examples": "tsc -p examples/react/tsconfig.json"
+    "test:examples": "tsc -p examples/react/tsconfig.json",
+    "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only --ignore-scripts"
   },
   "keywords": [
     "audio",
@@ -43,9 +53,11 @@
     "node": ">=20.19.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
+    "@changesets/cli": "3.0.3",
     "@playwright/test": "^1.64.1",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
