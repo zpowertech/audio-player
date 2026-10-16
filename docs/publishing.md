@@ -36,7 +36,7 @@
 npm trust github @zpowertech/audio-player --repo=zpowertech/audio-player --file=release.yml --env=npm --allow-publish
 ```
 
-首次创建包时，由具有 `@zpowertech` 发布权限的账号使用 `npm stage publish <tarball> --access public` 建立包记录。npm 会生成 `0.0.0-stage` 占位版本，实际产物进入暂存区。绑定 Trusted Publisher 后，由 GitHub Actions 发布正式版本；占位版本不代表首版已发布。
+首次创建包时，由具有 `@zpowertech` 发布权限的账号使用 `npm stage publish <tarball> --access public` 建立包记录。npm 会生成 `0.0.0-stage` 占位版本，实际产物进入暂存区。绑定 Trusted Publisher 后，先用 `npm stage reject <stage-id>` 撤销此次建包的暂存记录，再由 GitHub Actions 发布正式版本。npm 会要求 2FA 确认撤销；如果保留同一版本的暂存记录，直接发布会收到 `E409: Cannot publish over previously staged version`。占位版本不代表首版已发布。
 
 Trusted Publisher 新建后需在 2 天内完成首次成功发布。不需要向 GitHub Secrets 添加 `NPM_TOKEN` 或 `NODE_AUTH_TOKEN`。GitHub 仓库当前为私有仓库；OIDC 可用于发布公开 npm 包，但 npm 不为私有仓库生成 provenance 证明，因此工作流不强制传入 `--provenance`。
 

@@ -18,7 +18,9 @@
 - tarball 独立安装、公开类型与导出检查，以及 Vite / Webpack 生产构建。
 - Chrome：29 项核心播放、4 项安装包、2 项示例交互，共 35 项；普通页面和 React 示例截图均已生成。
 
-格式样本结果与 README 的 Chrome 验证表一致。CI 配置已更新为仅 Chrome；本轮结果来自本地，Linux / Windows 云端执行结果需在推送后另行确认。
+格式样本结果与 README 的 Chrome 验证表一致。
+
+同日，提交 `b778eff` 的 [GitHub Actions 验证](https://github.com/zpowertech/audio-player/actions/runs/38896664679) 通过：Linux 完整 `verify`（含 35 项 Chrome 用例）和 Windows 的 29 项 Chrome 核心播放回归均成功。发布工作流也通过了完整验证，并确认 Changesets 发布 tarball 与已测试的安装包逐字节一致。
 
 ## 重现
 
