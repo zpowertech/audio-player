@@ -1,0 +1,40 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>Audio Player — 实际浏览器验收</title>
+<style>body{font:16px system-ui;max-width:900px;margin:32px auto;padding:0 20px}button{font:inherit;padding:12px;margin:5px}pre{white-space:pre-wrap;background:#f3f5f7;padding:20px}li{padding:8px}</style>
+<h1>Audio Player 实际浏览器验收</h1><p>每项单独点击；测试播放合成音或 5 秒参考语音。完成后自动释放播放器。</p>
+<div id="buttons"></div><pre id="status">准备就绪</pre><ul id="results"></ul>
+<script type="module">
+import {createAudioPlayer} from '/dist/index.js';
+const reports=[];let busy=false;
+const statusEl=document.querySelector('#status');const buttonsEl=document.querySelector('#buttons');const resultsEl=document.querySelector('#results');
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const assert=(ok,message)=>{if(!ok)throw Error(message);};
+async function until(fn){const end=performance.now()+12000;while(!fn()){if(performance.now()>end)throw Error('Timed out');await wait(25);}}
+function add(name,action){const button=document.createElement('button');button.textContent=name;buttonsEl.append(button);button.onclick=()=>{
+ if(busy)return;busy=true;statusEl.textContent='正在测试 '+name;
+ const player=createAudioPlayer();
+ Promise.resolve(action(player)).then(()=>({name,result:'passed'}),e=>({name,result:'failed',code:e.code,message:e.message})).then(async result=>{
+  await player.dispose();reports.push(result);const li=document.createElement('li');li.textContent=JSON.stringify(result);resultsEl.append(li);
+  document.querySelector('#status').textContent=JSON.stringify({userAgent:navigator.userAgent,reports},null,2);busy=false;
+  await fetch('/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userAgent:navigator.userAgent,reports})});
+ });
+};}
+add('SILK 流式 / 暂停 / 续播 / 重播',async p=>{
+ const id='manual-'+Date.now();await p.play('/stream.silk?delay=30&batch=5&id='+id);
+ assert(!(await(await fetch('/stats?id='+id)).json()).done,'started only after download');
+ await until(()=>p.getSnapshot().currentTime>.3);p.pause();await wait(100);const time=p.getSnapshot().currentTime;
+ await wait(250);assert(Math.abs(p.getSnapshot().currentTime-time)<.05,'pause clock moved');
+ await p.play();await until(()=>p.getSnapshot().status==='ended');
+ assert(Math.abs(p.getSnapshot().duration-5)<.001,'duration mismatch');
+ await p.play();assert(p.getSnapshot().currentTime<.5,'replay did not start at zero');
+});
+add('原生 WAV 暂停 / 续播 / 重播',async p=>{
+ await p.play('/test/fixtures/voice.wav');await until(()=>p.getSnapshot().currentTime>.2);
+ p.pause();const time=p.getSnapshot().currentTime;await wait(250);assert(Math.abs(time-p.getSnapshot().currentTime)<.05,'pause clock moved');
+ await p.play();await until(()=>p.getSnapshot().status==='ended');assert(Math.abs(p.getSnapshot().duration-5)<.001,'duration mismatch');
+ await p.play();assert(p.getSnapshot().currentTime<.5,'replay did not start at zero');
+});
+add('无后缀 SILK 自动识别',async p=>{await p.play('/opaque?delay=0&batch=250');await until(()=>p.getSnapshot().status==='ended');});
+for(const extension of ['mp3','m4a','aac','flac','ogg','opus','webm','alac.m4a'])add(extension,async p=>{
+ await p.play('/test/fixtures/tone.'+extension);await until(()=>p.getSnapshot().status==='ended');assert(p.getSnapshot().duration>.9,'duration mismatch');
+});
+</script></html>

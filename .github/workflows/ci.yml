@@ -1,0 +1,48 @@
+name: Verify audio player
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: rustup toolchain install 1.85.0 --profile minimal --target wasm32-unknown-unknown
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification
+          path: |
+            output/
+            test-results/
+            .test-package/*.tgz
+          include-hidden-files: true
+  branded-browsers:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: rustup toolchain install 1.85.0 --profile minimal --target wasm32-unknown-unknown
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install chrome msedge
+      - run: npx playwright test --project=chrome --project=msedge
+        env:
+          AUDIO_TEST_CHANNELS: chrome,msedge
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: branded-browser-results
+          path: |
+            output/
+            test-results/

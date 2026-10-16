@@ -1,0 +1,10 @@
+node_modules/
+dist/
+target/
+.cargo-home/
+.test-package/
+test-results/
+playwright-report/
+output/
+*.tgz
+.DS_Store

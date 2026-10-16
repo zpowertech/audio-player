@@ -1,0 +1,49 @@
+{
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0.1 Safari/605.1.15",
+  "reports": [
+    {
+      "name": "SILK 流式 / 暂停 / 续播 / 定位",
+      "result": "passed"
+    },
+    {
+      "name": "原生 WAV 暂停 / 续播 / 定位",
+      "result": "passed"
+    },
+    {
+      "name": "无后缀 SILK 自动识别",
+      "result": "passed"
+    },
+    {
+      "name": "mp3",
+      "result": "passed"
+    },
+    {
+      "name": "m4a",
+      "result": "passed"
+    },
+    {
+      "name": "aac",
+      "result": "passed"
+    },
+    {
+      "name": "flac",
+      "result": "passed"
+    },
+    {
+      "name": "ogg",
+      "result": "passed"
+    },
+    {
+      "name": "opus",
+      "result": "passed"
+    },
+    {
+      "name": "webm",
+      "result": "passed"
+    },
+    {
+      "name": "alac.m4a",
+      "result": "passed"
+    }
+  ]
+}

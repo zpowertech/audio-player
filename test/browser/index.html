@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Audio player integration tests</title>
+<button id="run">Run audio action</button><output id="ready">loading</output>
+<script type="module">
+import * as sdk from '/dist/index.js';
+window.sdk = sdk;
+window.player = sdk.createAudioPlayer();
+window.historyStates = [];
+window.player.subscribe(() => window.historyStates.push({...window.player.getSnapshot(), at: performance.now()}));
+window.results = {};
+document.querySelector('#run').onclick = () => window.run?.();
+document.querySelector('#ready').textContent = 'ready';
+</script></html>

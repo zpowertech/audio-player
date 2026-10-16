@@ -1,0 +1,9 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Audio Player</title>
+<style>body{font:16px system-ui;color:#17212b;background:#f5f7fa;max-width:780px;margin:64px auto;padding:0 24px}main{background:white;border:1px solid #dce2e9;border-radius:16px;padding:28px}h1{margin-top:0;font-size:28px}p{color:#536373;line-height:1.6}label{display:block;margin:16px 0 6px}input,select,button{font:inherit;padding:10px;border:1px solid #bfcbd7;border-radius:6px}input[type=url]{box-sizing:border-box;width:100%}button{cursor:pointer;background:#edf3fa;margin:8px 6px 8px 0}button:first-child{background:#185adb;color:white}output{display:block;font-variant-numeric:tabular-nums;padding:12px 0}#error{color:#b42318}a{color:#185adb}</style>
+<main><h1>Audio Player</h1><p>一个播放器，原生音频与 SILK。暂停后再次播放会继续；切换音频从头开始。</p>
+<label for="url">音频 URL</label><input id="url" type="url" value="/test/fixtures/test.slk">
+<label for="file">或选择本地音频</label><input id="file" type="file" accept="audio/*,.slk,.silk">
+<div><button id="play">播放 / 续播</button><button id="pause">暂停</button></div>
+<output id="state" aria-live="polite">idle · 0.00 s / 未知</output><p id="error" role="alert"></p>
+<p><a href="./react/">React 聊天语音示例</a> · <a href="/test/browser/manual.html">实际浏览器验收</a></p></main>
+<script type="module" src="./demo.js"></script></html>
