@@ -1,6 +1,6 @@
 # 验证范围与记录
 
-日期：2026-10-16。所有音频均来自仓库测试样本，无远程解码服务。
+更新日期：2026-10-17。持续回归使用仓库测试样本，无远程解码服务；用户提供的远程音频复测单独记录。
 
 ## 当前验证策略
 
@@ -9,6 +9,21 @@
 - 本地自动化使用隔离配置，不读取个人浏览器资料。
 - Linux CI 执行完整 `npm run verify`，Windows CI 执行 Chrome 核心播放回归。
 - 手工验收也在 Chrome 中进行。其他浏览器的旧结果保留在下方历史记录中，不作为当前回归结论。
+
+## SILK 分块重采样回归
+
+2026-10-17 在 macOS、Chrome 155.0.8059.84 上执行 `npm run verify`，完整通过：25 项 Rust、29 项 Node、React 示例类型检查、tarball 独立安装与 Vite / Webpack 构建，以及 31 项 Chrome 核心播放、4 项安装包、2 项示例交互，共 37 项浏览器用例。
+
+播放器复用 Rust 重采样器的跨包状态，输出 48 kHz PCM，并显式使用 48 kHz `AudioContext`。新增的独立 C SDK 参考样本验证完整和逐包输出；浏览器用例模拟默认 44.1 kHz 的上下文环境，检查显式采样率、完整 PCM 和分块渲染相对连续参考的最大误差（阈值 `1e-6`，小于一个 16-bit PCM 量化步长）。另一个用例覆盖下载完成前首播、断流、暂停续播以及复用压缩缓存重播，并核对两次完整 PCM。
+
+本地复测用户提供的 2.68 秒、134 包、原生 16 kHz 语音：
+
+- 直接从 CDN 播放，输出 48 kHz / 128,640 samples，与 C SDK 参考逐样本一致；实际排程为 59 个分块。
+- 使用同一资源模拟慢速分块响应，下载完成前开始播放，126 个分块自然播放结束。
+- 将以上两次实际排程和 PCM 送入 Chrome `OfflineAudioContext`，与连续参考波形对比，最大误差均为 `0`。这是数字渲染验证，不是扬声器或麦克风录音。
+- 专项结果和用户音频保存在被 Git 忽略的 `output/quality-9a55fbc9/`；持续回归只使用既有仓库音频派生的 C SDK 参考，不依赖用户 URL。
+
+上述为本地验证；本次未执行云端 CI 或 Windows 验收。
 
 ## Chrome 回归结果
 
@@ -34,7 +49,7 @@ npx playwright install chrome
 npm run verify
 ```
 
-`verify` 包含构建、24 项 Rust 测试、28 项 Node 测试、React 示例类型检查、tarball 独立安装与 Vite / Webpack 构建，以及 Chrome 的 29 项核心、4 项安装包、2 项示例用例。只运行浏览器回归时，先完成 `npm run build` 和 `npm run test:package`，再执行 `npm run test:browser`。
+`verify` 包含构建、25 项 Rust 测试、29 项 Node 测试、React 示例类型检查、tarball 独立安装与 Vite / Webpack 构建，以及 Chrome 的 31 项核心、4 项安装包、2 项示例用例。只运行浏览器回归时，先完成 `npm run build` 和 `npm run test:package`，再执行 `npm run test:browser`。
 
 手工验收先执行 `node scripts/test-server.mjs`，再用 Chrome 打开 `http://127.0.0.1:4280/test/browser/manual.html` 并逐项点击；结果保存到 `output/manual-results.json`。Playwright 的详细 JSON、日志、截图和失败 trace 保存在被 Git 忽略的 `output/` / `test-results/` 中。
 

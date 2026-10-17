@@ -193,7 +193,7 @@ test('SILK outputs exact reference samples and WASM failure can retry',async({pa
   });
   expect(await play(page)).toEqual({ok:true});
   expect(await page.evaluate(async()=>{
-    const bytes=await(await fetch('/test/fixtures/test_16000.pcm')).arrayBuffer();const reference=new Int16Array(bytes);
+    const bytes=await(await fetch('/test/fixtures/test_48000.pcm')).arrayBuffer();const reference=new Int16Array(bytes);
     return outputChunks[0].length>0 && outputChunks[0].every((value,i)=>value===reference[i]/32768);
   })).toBe(true);
 });

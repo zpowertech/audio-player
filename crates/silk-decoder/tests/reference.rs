@@ -1,4 +1,4 @@
-use silk_decoder::{decode_silk_native, list_packets, Decoder};
+use silk_decoder::{decode_silk, decode_silk_native, list_packets, Decoder};
 
 const SILK: &[u8] = include_bytes!("../../../test/fixtures/test.slk");
 const REFERENCE: &[u8] = include_bytes!("../../../test/fixtures/test_16000.pcm");
@@ -19,6 +19,24 @@ fn native_and_packet_decoding_match_the_reference() {
     let mut streamed = Vec::new();
     for packet in list_packets(SILK) {
         streamed.extend(decoder.decode_packet(packet).unwrap());
+    }
+    assert_eq!(streamed, reference);
+}
+
+#[test]
+fn resampled_packets_match_the_48khz_c_sdk_reference() {
+    let reference: Vec<i16> = include_bytes!("../../../test/fixtures/test_48000.pcm")
+        .chunks_exact(2)
+        .map(|bytes| i16::from_le_bytes([bytes[0], bytes[1]]))
+        .collect();
+    assert_eq!(reference.len(), 240_000);
+    assert_eq!(decode_silk(SILK, 48_000).unwrap(), reference);
+    let mut decoder = Decoder::new(48_000);
+    let mut streamed = Vec::new();
+    for packet in list_packets(SILK) {
+        let pcm = decoder.decode_packet(packet).unwrap();
+        assert_eq!(pcm.len(), 960);
+        streamed.extend(pcm);
     }
     assert_eq!(streamed, reference);
 }

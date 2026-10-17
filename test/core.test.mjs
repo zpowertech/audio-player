@@ -26,6 +26,25 @@ for (const skip of [0, 1, 2]) for (const size of [1, 2, 7, 1024, 65536]) {
     } finally { stream.dispose(); silk.dispose(); }
   });
 }
+test('48 kHz packet decoding keeps resampler history and resets for a new stream', async () => {
+  const reference = await readFile(new URL('./fixtures/test_48000.pcm', import.meta.url));
+  const silk = await loadSilk();
+  try {
+    for (const chunkSize of [1, 1024]) {
+      const stream = silk.stream(48000);
+      try {
+        const output = parse(fixture, chunkSize).map(packet => {
+          const pcm = stream.decode(packet);
+          assert.equal(stream.sampleRate, 48000);
+          assert.equal(pcm.length, 960);
+          return Buffer.from(pcm.buffer);
+        });
+        assert.equal(Buffer.concat(output).length, 480000);
+        assert.deepEqual(Buffer.concat(output), reference);
+      } finally { stream.dispose(); }
+    }
+  } finally { silk.dispose(); }
+});
 test('end marker may cross chunks, and trailing bytes are rejected', () => {
   assert.equal(parse(new Uint8Array([...fixture, 255, 255])).length, 250);
   assert.throws(() => parse(new Uint8Array([...fixture, 255, 255, 0])), /after SILK end marker/);

@@ -9,7 +9,7 @@ interface SilkExports {
   silk_last_error(outLength: number): number;
   silk_decode(ptr: number, length: number, outRate: number): number;
   silk_decode_wav(ptr: number, length: number): number;
-  silk_stream_new(): number;
+  silk_stream_new(sampleRate: number): number;
   silk_stream_free(handle: number): void;
   silk_stream_sample_rate(handle: number): number;
   silk_stream_packets(handle: number): number;
@@ -31,7 +31,8 @@ export interface Silk {
   decodeToWav(bytes: SilkBytes): Blob;
   /** Split in one pass. Views share the input; do not mutate it while decoding. */
   packets(bytes: SilkBytes): Uint8Array[];
-  stream(): SilkStream;
+  /** Zero/default follows the native rate; an explicit rate preserves resampler history across packets. */
+  stream(sampleRate?: number): SilkStream;
   /** Release scratch memory. This decoder and its streams remain usable. */
   dispose(): void;
 }
@@ -108,8 +109,8 @@ class SilkDecoder implements Silk {
     });
   }
 
-  stream(): SilkStream {
-    let handle = guard('failed to create SILK stream', () => this.#exports.silk_stream_new());
+  stream(sampleRate = 0): SilkStream {
+    let handle = guard('failed to create SILK stream', () => this.#exports.silk_stream_new(sampleRate));
     if (!handle) throw new SilkError('out of memory creating SILK stream');
     let cursor: number | undefined;
     let container: Uint8Array | undefined;

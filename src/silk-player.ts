@@ -15,7 +15,9 @@ export function resumeContext(context: AudioContext): Promise<void> {
 }
 export function prepareContext(): PreparedContext {
   if (typeof AudioContext === 'undefined') throw new PlayerError('NOT_SUPPORTED', 'Web Audio is not available');
-  const context = new AudioContext();
+  // Match the stateful SILK resampler. Device-rate conversion happens after
+  // the chunks are joined, rather than independently on every source node.
+  const context = new AudioContext({ sampleRate: 48_000 });
   const ready = resumeContext(context);
   // An auto/native attempt may succeed without consuming this promise.
   void ready.catch(() => {});
@@ -126,7 +128,7 @@ export class SilkBackend implements Backend {
       try { silk = await loadSilk(); }
       catch (cause) { throw new PlayerError('WASM_INIT', 'Unable to initialize the SILK decoder', cause); }
       signal.throwIfAborted();
-      stream = silk.stream();
+      stream = silk.stream(this.context.sampleRate);
       const packets = cache.complete ? cache.values() : networkPackets(this.url, signal, cache);
       let decodedTime = 0;
       let deadline = performance.now() + 4;

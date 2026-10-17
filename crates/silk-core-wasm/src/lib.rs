@@ -281,11 +281,13 @@ pub struct StreamDecoder {
 }
 
 /// Create a streaming decoder. Release it with [`silk_stream_free`].
+/// A zero sample rate follows the input; a fixed rate keeps resampler state
+/// across packets so separately scheduled PCM buffers need no resampling.
 #[no_mangle]
-pub extern "C" fn silk_stream_new() -> *mut StreamDecoder {
+pub extern "C" fn silk_stream_new(sample_rate: u32) -> *mut StreamDecoder {
     Box::into_raw(Box::new(StreamDecoder {
-        inner: Decoder::new(0),
-        sample_rate: 24_000,
+        inner: Decoder::new(sample_rate),
+        sample_rate: if sample_rate == 0 { 24_000 } else { sample_rate },
         seen: 0,
     }))
 }
