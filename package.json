@@ -1,6 +1,6 @@
 {
   "name": "@zpowertech/audio-player",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Browser audio playback with automatic format detection, incremental SILK decoding, pause and resume",
   "repository": {
