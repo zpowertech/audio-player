@@ -10,7 +10,7 @@
 `.github/workflows/release.yml` 在 `main` 更新时运行，也可从 `main` 手动触发：
 
 1. `prepare` 只具备源码读取权限，使用 Node.js 24、Rust 1.85.0 和 Chrome 执行完整 `npm run verify`。验证覆盖 Rust、Node、类型、tarball 独立安装、Vite / Webpack 和 Chrome。
-2. 有待发布 changeset 时，`version` 创建或更新 `chore(release): 更新版本与变更日志` PR，同时更新版本、`CHANGELOG.md` 与 `package-lock.json`。
+2. 有待发布 changeset 时，`version` 创建或更新 `chore(release): 更新版本与变更日志` PR，同时更新版本、`CHANGELOG.md` 与 `package-lock.json`。该 job 使用 `fetch-depth: 0` 拉取完整提交历史，供 Changesets 查找 changeset 的来源提交，避免在 `persist-credentials: false` 下补拉历史时触发 Git 认证错误。
 3. 没有 changeset 且当前版本尚未发布时，`prepare` 上传 Changesets 发布计划与 tarball，并逐字节核对它和 Chrome 已验证的安装包一致。
 4. `publish` 在 `npm` 环境中使用 OIDC 发布准备好的 tarball，然后创建 Git Tag 与 GitHub Release。此 job 跳过安装脚本，不构建源码；只有它具备 `id-token: write`。
 
